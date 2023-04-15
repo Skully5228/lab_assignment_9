@@ -1,23 +1,28 @@
-#include <stdio.h>
+//Justin Rimmeli
+//5299451
 
+#include <stdio.h>
+#include <stdlib.h>
 // RecordType
 struct RecordType
 {
-	int		id;
+	int	id;
 	char	name;
-	int		order; 
+	int	order; 
 };
 
 // Fill out this structure
 struct HashType
 {
+	struct RecordType** hashArray;
+	int hashSize;
 
 };
 
 // Compute the hash function
-int hash(int x)
+int hash(int x, int hashSize)
 {
-
+	return x % hashSize;
 }
 
 // parses input file to an integer array
@@ -79,7 +84,10 @@ void displayRecordsInHash(struct HashType *pHashArray, int hashSz)
 
 	for (i=0;i<hashSz;++i)
 	{
-		// if index is occupied with any records, print all
+		if (pHashArray->hashArray[i] != NULL)
+		{
+			printf("Index %d -> %d, %c, %d\n", i, pHashArray->hashArray[i]->id, pHashArray->hashArray[i]->name, pHashArray->hashArray[i]->order);
+		}
 	}
 }
 
@@ -90,5 +98,36 @@ int main(void)
 
 	recordSz = parseData("input.txt", &pRecords);
 	printRecords(pRecords, recordSz);
-	// Your hash implementation
+	
+	struct HashType hashArray;
+	hashArray.hashSize = recordSz;
+	
+	hashArray.hashArray = (struct RecordType**)malloc(sizeof(struct RecordType*) * hashArray.hashSize);
+	if (hashArray.hashArray == NULL)
+	{
+		printf("Cannot allocate memory\n");
+		return -1;
+	}
+	
+	for (int i = 0; i < hashArray.hashSize; ++i)
+	{
+		hashArray.hashArray[i] = NULL;
+	}
+	
+	for (int i = 0; i < recordSz; ++i)
+	{
+		int index = hash(pRecords[i].id, hashArray.hashSize); // Compute hash index
+		while (hashArray.hashArray[index] != NULL)
+		{
+			index = (index + 1) % hashArray.hashSize; // Move to next index if collision occurs
+		}
+		hashArray.hashArray[index] = &pRecords[i]; // Insert record into hash array
+	}
+	displayRecordsInHash(&hashArray, hashArray.hashSize);
+	
+	// Free dynamically allocated memory
+	free(hashArray.hashArray);
+	free(pRecords);
+
+	return 0;
 }
